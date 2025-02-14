@@ -1,12 +1,12 @@
 export namespace main {
 	
-	export class Tasks {
+	export class Task {
 	    task: string;
 	    status: string;
 	    date: string;
 	
 	    static createFrom(source: any = {}) {
-	        return new Tasks(source);
+	        return new Task(source);
 	    }
 	
 	    constructor(source: any = {}) {

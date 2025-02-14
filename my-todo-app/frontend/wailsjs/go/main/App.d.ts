@@ -4,4 +4,8 @@ import {main} from '../models';
 
 export function AddTask(arg1:string,arg2:string):Promise<string>;
 
-export function GetTasks():Promise<Array<main.Tasks>>;
+export function DeleteTask(arg1:string):Promise<string>;
+
+export function GetTasks():Promise<Array<main.Task>>;
+
+export function UpdateTask(arg1:string):Promise<main.Task>;

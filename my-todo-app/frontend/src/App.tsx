@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import "./App.css";
-import { AddTask, GetTasks } from "../wailsjs/go/main/App";
+import { AddTask, GetTasks, DeleteTask, UpdateTask } from "../wailsjs/go/main/App";
 
 interface Task {
   task: string;
@@ -30,14 +30,38 @@ function App() {
 
   // Добавление новой задачи
   function addNewTask() {
+    if (!task.trim()) {
+      updateResultText("Ошибка: задача не может быть пустой!");
+      return;
+    }
     AddTask(task, taskTime)
       .then(() => {
         setTask("");
         setTaskTime("");
         updateResultText("Задача добавлена!");
-        loadTasks(); // Обновляем список
+        loadTasks();
       })
       .catch((err) => console.error("Ошибка добавления задачи:", err));
+  }
+
+  // Удаление задачи
+  function removeTask(taskName: string) {
+    DeleteTask(taskName)
+      .then(() => {
+        updateResultText("Задача удалена!");
+        loadTasks();
+      })
+      .catch((err) => console.error("Ошибка удаления задачи:", err));
+  }
+
+  // Отметка задачи как выполненной (можно нажать только 1 раз)
+  function markTaskAsDone(taskName: string) {
+    UpdateTask(taskName)
+      .then(() => {
+        updateResultText("Задача выполнена!");
+        loadTasks();
+      })
+      .catch((err) => console.error("Ошибка обновления статуса:", err));
   }
 
   // Загрузка задач при запуске
@@ -67,19 +91,38 @@ function App() {
           placeholder="Введите задачу"
         />
         <button className="btn" onClick={addNewTask}>Добавить задачу</button>
-        <button className="btn" onClick={loadTasks}>Обновить список</button>
       </div>
       <div>
         <h1>Список задач</h1>
-        <ul>
-          {tasks.map((item, index) => (
-            <li key={index}>
-              <strong>Задача:</strong> {item.task} <br />
-              <strong>Статус:</strong> {item.status} <br />
-              <strong>Дата:</strong> {item.date}
-            </li>
-          ))}
-        </ul>
+        <table className="task-table">
+          <thead>
+            <tr>
+              <th>Задача</th>
+              <th>Дата выполнения</th>
+              <th>Статус</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tasks.map((item, index) => (
+              <tr key={index}>
+                <td>{item.task}</td>
+                <td>{item.date}</td>
+                <td>{item.status}</td>
+                <td>
+                  <button className="btn-delete" onClick={() => removeTask(item.task)}>Удалить</button>
+                  <button
+                    className="btn-done"
+                    onClick={() => markTaskAsDone(item.task)}
+                    disabled={item.status === "Done"}
+                  >
+                    Готово
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

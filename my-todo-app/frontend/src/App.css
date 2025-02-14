@@ -70,9 +70,40 @@
 }
 
 .input-box .datetime-input:hover {
-    background-color: rgba(255, 255, 255, 1);
+    background-color: rgb(175, 101, 101);
 }
 
 .input-box .datetime-input:focus {
     background-color: rgba(255, 255, 255, 1);
 }
+.task-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  
+  .task-table th, .task-table td {
+    border: 1px solid #b33737;
+    padding: 8px;
+    text-align: center;
+  }
+  
+  .task-table th {
+    background-color: #cc4608; 
+    color: white; 
+    font-weight: bold;
+  }
+  
+  
+  .task-table tr:nth-child(even) {
+    background-color: #682121;
+  }
+  
+  .task-table tr:hover {
+    background-color: #a16c6c;
+  }
+  .btn-done:disabled {
+    background-color: gray;
+    cursor: not-allowed;
+  }
+  
