@@ -9,5 +9,12 @@
   "author": {
     "name": "ydoskeno",
     "email": "doskenovtar@gmail.com"
-  }
+  },
+  "frontend": {
+  "dir": "./frontend",
+  "install": "npm install",
+  "build": "npm run build",
+  "dev": "npm run dev"
+}
+
 }

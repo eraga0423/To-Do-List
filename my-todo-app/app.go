@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"my-todo-app/internal/validation"
+	"my-todo-app/internal/controller"
+	"my-todo-app/internal/models"
+	"my-todo-app/internal/repository"
 )
 
 // App struct
@@ -22,39 +23,27 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 }
 
-// Greet returns a greeting for the given name
-func (a *App) AddTask(taskTime string, task string) string {
-	validation.AddTaskValid(task, taskTime)
-
-	return fmt.Sprintf("Задача %s, до %s добавлена.  ", task, taskTime)
+func New() controller.Controller {
+	repo := repository.NewRepo()
+	return controller.NewController(repo)
 }
 
-// Greet returns a greeting for the given name
-// func (a *App) GetTasks() []Task {
-// 	// var oneTask Tasks
-// 	oneTask := Task{
-// 		TaskName: "bla",
-// 		Status:   "ne vip",
-// 		Date:     "2025",
-// 	}
-// 	tasks := []Task{}
-// 	for i := 0; i < 10; i++ {
-// 		oneTask.TaskName = fmt.Sprintf("%dфффффффффффффффффффффффффффф", i)
-// 		tasks = append(tasks, oneTask)
-// 	}
+func (a *App) AddTask(taskTime string, task string, priority string) models.Response {
+	return New().AddTaskController(taskTime, task, priority)
+}
 
-// 	return tasks
-// }
+func (a *App) GetTasksNotCompleted() ([]models.Task, models.Response) {
+	return New().GetTasksNotComplController()
+}
 
-// func (a App) DeleteTask(nameTask string) string {
-// 	return "udaleno"
-// }
+func (a *App) DeleteTask(id int) models.Response {
+	return New().DeleteTaskContrller(id)
+}
 
-// func (a App) UpdateTask(nameTask string) Task {
-// 	Updating := models.Task{
-// 		TaskName: "ubrat u pesni",
-// 		Status:   "vypolnen",
-// 		Date:     "20225",
-// 	}
-// 	return Updating
-// }
+func (a *App) UpdateTask(id int) models.Response {
+	return New().UpdateTaskController(id)
+}
+
+func (a *App) GetTasksCompleted() ([]models.Task, models.Response) {
+	return New().GetTasksComplController()
+}

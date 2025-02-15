@@ -1,109 +1,179 @@
-#app {
+#App {
     height: 100vh;
     text-align: center;
+    padding: 20px;
+    background-color: #09004a;
 }
 
 #logo {
     display: block;
     width: 50%;
-    height: 50%;
+    height: auto;
     margin: auto;
     padding: 10% 0 0;
     background-position: center;
     background-repeat: no-repeat;
-    background-size: 100% 100%;
-    background-origin: content-box;
+    background-size: contain;
 }
 
 .result {
-    height: 20px;
-    line-height: 20px;
+    height: 30px;
+    line-height: 30px;
     margin: 1.5rem auto;
+    font-size: 16px;
+    font-weight: bold;
+    color: #dbc2c2;
+}
+
+.input-box {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.input-box .input, .input-box .datetime-input {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+    height: 35px;
+    line-height: 35px;
+    padding: 0 10px;
+    font-size: 14px;
+    background-color: white;
+}
+
+.input-box .input:hover, .input-box .datetime-input:hover {
+    background-color: #f9f9f9;
+}
+
+.input-box .input:focus, .input-box .datetime-input:focus {
+    border-color: #143483;
+    background-color: rgb(16, 20, 88);
 }
 
 .input-box .btn {
-    width: 100px;
-    height: 30px;
-    line-height: 10px;
-    border-radius: 3px;
+    width: 120px;
+    height: 35px;
+    border-radius: 5px;
     border: none;
-    margin: 0 0 0 30px;
-    padding: 0 8px;
+    font-size: 14px;
+    font-weight: bold;
+    background-color: #4b3fcd;
+    color: white;
     cursor: pointer;
+    transition: 0.3s ease-in-out;
 }
 
 .input-box .btn:hover {
-    background-image: linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%);
-    color: #333333;
+    background-image: linear-gradient(to top, #0f0fbb 0%, #e2ebf0 100%);
+    color: #b8b8c6;
 }
 
-.input-box .input {
-    border: none;
-    border-radius: 3px;
-    outline: none;
-    height: 30px;
-    line-height: 30px;
-    padding: 0 10px;
-    background-color: rgba(240, 240, 240, 1);
-    -webkit-font-smoothing: antialiased;
-}
-
-.input-box .input:hover {
-    border: none;
-    background-color: rgba(255, 255, 255, 1);
-}
-
-.input-box .input:focus {
-    border: none;
-    background-color: rgba(255, 255, 255, 1);
-}
-.input-box .datetime-input {
-    border: none;
-    border-radius: 3px;
-    outline: none;
-    height: 30px;
-    line-height: 30px;
-    padding: 0 10px;
-    background-color: rgba(240, 240, 240, 1);
-    font-size: 14px;
-    cursor: pointer;
-}
-
-.input-box .datetime-input:hover {
-    background-color: rgb(175, 101, 101);
-}
-
-.input-box .datetime-input:focus {
-    background-color: rgba(255, 255, 255, 1);
-}
 .task-table {
-    width: 100%;
+    width: 90%;
+    max-width: 800px;
+    margin: 0 auto;
     border-collapse: collapse;
-    margin-top: 20px;
-  }
-  
-  .task-table th, .task-table td {
-    border: 1px solid #b33737;
-    padding: 8px;
+    box-shadow: 0px 0px 10px rgba(7, 41, 133, 0.1);
+    background-color: rgb(16, 19, 73);
+}
+
+.task-table th, .task-table td {
+    border: 1px solid #423232;
+    padding: 12px;
     text-align: center;
-  }
-  
-  .task-table th {
-    background-color: #cc4608; 
-    color: white; 
+}
+
+.task-table th {
+    background-color: #193da7;
+    color: rgb(225, 222, 239);
     font-weight: bold;
-  }
-  
-  
-  .task-table tr:nth-child(even) {
-    background-color: #682121;
-  }
-  
-  .task-table tr:hover {
-    background-color: #a16c6c;
-  }
-  .btn-done:disabled {
-    background-color: gray;
+}
+
+.task-table tr:nth-child(even) {
+    background-color: #071e8e;
+}
+
+.task-table tr:hover {
+    background-color: #e0d5d5;
+}
+
+.btn-delete, .btn-done {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+}
+
+.btn-delete {
+    background-color: #d9534f;
+    color: white;
+}
+
+.btn-delete:hover {
+    background-color: #c9302c;
+}
+
+.btn-done {
+    background-color: #5cb85c;
+    color: white;
+}
+
+.btn-done:hover {
+    background-color: #4cae4c;
+}
+
+.btn-done:disabled {
+    background-color: rgb(178, 175, 207);
     cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .input-box {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .task-table {
+        width: 100%;
+        font-size: 14px;
+    }
+
+    .btn-delete, .btn-done {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+}
+.done-task {
+    background-color: #e0e0e0; /* светлый фон для выполненных задач */
+  }
+  
+  .done-task td {
+    color: #a0a0a0; /* серый текст для выполненных задач */
+  }
+  
+  .done-task .btn-done {
+    display: none; /* скрыть кнопку "Готово" для выполненных задач */
+  }
+  .btn-done {
+    background-color: #5cb85c;
+    color: white;
+  }
+  
+  .btn-done:hover {
+    background-color: #4cae4c;
+  }
+  
+  .btn-not-done {
+    background-color: #f0ad4e; /* Цвет кнопки "Не готово" */
+    color: white;
+  }
+  
+  .btn-not-done:hover {
+    background-color: #ec971f;
   }
   

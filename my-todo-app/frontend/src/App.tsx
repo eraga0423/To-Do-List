@@ -1,73 +1,130 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import "./App.css";
-import { AddTask, GetTasks, DeleteTask, UpdateTask } from "../wailsjs/go/main/App";
+import { AddTask, GetTasksCompleted, GetTasksNotCompleted, DeleteTask, UpdateTask } from "../wailsjs/go/main/App";
 
 interface Task {
+  id: number;
   task: string;
   status: string;
   date: string;
+  priority: string; // Добавляем поле для приоритета
+}
+
+interface Response {
+  status: number;
+  message?: string;
+  error?: string;
 }
 
 function App() {
   const [resultText, setResultText] = useState("Введите задачу");
-  const [task, setTask] = useState("");
+  const [taskName, setTaskName] = useState("");
   const [taskTime, setTaskTime] = useState("");
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [priority, setPriority] = useState("Medium"); // Состояние для приоритета
+  const [allTasks, setAllTasks] = useState<Task[]>([]); // Объединяем все задачи
 
-  // Обновление значений инпутов
-  const updateTask = (e: React.ChangeEvent<HTMLInputElement>) => setTask(e.target.value);
-  const updateTaskTime = (e: React.ChangeEvent<HTMLInputElement>) => setTaskTime(e.target.value);
+  const updateTaskName = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setTaskName(e.target.value), []);
+  const updateTaskTime = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setTaskTime(e.target.value), []);
+  const updatePriority = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setPriority(e.target.value), []);
+  const updateResultText = useCallback((message: string) => setResultText(message), []);
 
-  // Обновление состояния после добавления задачи
-  const updateResultText = (result: string) => setResultText(result);
-
-  // Функция для загрузки списка задач из Go
-  const loadTasks = () => {
-    GetTasks()
-      .then((data: Task[]) => setTasks(data))
-      .catch((err) => console.error("Ошибка загрузки задач:", err));
+  // Функция для сортировки задач по приоритету
+  const sortTasksByPriority = (tasks: Task[]) => {
+    return tasks.sort((a, b) => {
+      const priorities = ["High", "Medium", "Low"];
+      return priorities.indexOf(a.priority) - priorities.indexOf(b.priority);
+    });
   };
 
-  // Добавление новой задачи
+  const loadTasks = useCallback(() => {
+    Promise.all([GetTasksNotCompleted(), GetTasksCompleted()])
+      .then(([notCompletedData, completedData]) => {
+        // Проверяем, что данные от API являются массивами задач
+        if (Array.isArray(notCompletedData)) {
+          const sortedNotCompletedTasks = sortTasksByPriority(notCompletedData);
+          setAllTasks(prevTasks => [
+            ...sortedNotCompletedTasks.map((task) => ({ ...task, status: "Not Completed" })),
+            ...prevTasks.filter(task => task.status !== "Not Completed")
+          ]);
+        } else {
+          updateResultText(notCompletedData.error || "Ошибка загрузки не выполненных задач");
+        }
+  
+        if (Array.isArray(completedData)) {
+          const sortedCompletedTasks = sortTasksByPriority(completedData);
+          setAllTasks(prevTasks => [
+            ...prevTasks.filter(task => task.status !== "Completed"),
+            ...sortedCompletedTasks.map((task) => ({ ...task, status: "Completed" }))
+          ]);
+        } else {
+          updateResultText(completedData.error || "Ошибка загрузки выполненных задач");
+        }
+      })
+      .catch((err) => console.error("Ошибка загрузки задач:", err));
+  }, [updateResultText, sortTasksByPriority]);
+  
+
+  const handleTaskAction = (
+    action: (taskId: number) => Promise<Response>,
+    taskId: number,
+    successMessage: string,
+    errorMessage: string
+  ) => {
+    action(taskId)
+      .then((response: Response) => {
+        if (response.status === 200 || response.status === 204) {
+          updateResultText(successMessage);
+          loadTasks();
+        } else {
+          updateResultText(response.error || errorMessage);
+          loadTasks();
+        }
+      })
+      .catch((err) => console.error(errorMessage, err));
+  };
+
   function addNewTask() {
-    if (!task.trim()) {
+    if (!taskName.trim()) {
       updateResultText("Ошибка: задача не может быть пустой!");
       return;
     }
-    AddTask(task, taskTime)
-      .then(() => {
-        setTask("");
-        setTaskTime("");
-        updateResultText("Задача добавлена!");
-        loadTasks();
+    AddTask(taskTime, taskName, priority) // Передаем приоритет в функцию добавления задачи
+      .then((response: Response) => {
+        if (response.status === 201) {
+          setTaskName("");
+          setTaskTime("");
+          setPriority("Medium"); // Сбрасываем приоритет в "Средний" после добавления задачи
+          updateResultText("Задача добавлена!");
+          loadTasks(); // Загружаем задачи после добавления новой
+        } else {
+          loadTasks();
+          updateResultText(response.error || "Ошибка при добавлении задачи");
+        }
       })
       .catch((err) => console.error("Ошибка добавления задачи:", err));
   }
 
-  // Удаление задачи
-  function removeTask(taskName: string) {
-    DeleteTask(taskName)
-      .then(() => {
-        updateResultText("Задача удалена!");
-        loadTasks();
-      })
-      .catch((err) => console.error("Ошибка удаления задачи:", err));
+  function removeTask(taskId: number) {
+    handleTaskAction(DeleteTask, taskId, "Задача удалена!", "Ошибка при удалении задачи");
   }
 
-  // Отметка задачи как выполненной (можно нажать только 1 раз)
-  function markTaskAsDone(taskName: string) {
-    UpdateTask(taskName)
-      .then(() => {
-        updateResultText("Задача выполнена!");
-        loadTasks();
-      })
-      .catch((err) => console.error("Ошибка обновления статуса:", err));
+  function markTaskAsDone(taskId: number) {
+    handleTaskAction(UpdateTask, taskId, "Задача выполнена!", "Ошибка при обновлении задачи");
   }
 
-  // Загрузка задач при запуске
+  function markTaskAsNotDone(taskId: number) {
+    handleTaskAction(UpdateTask, taskId, "Задача снова в списке невыполненных!", "Ошибка при обновлении задачи");
+  }
+
   useEffect(() => {
-    loadTasks();
-  }, []);
+    loadTasks(); // Загружаем задачи при первом рендере
+
+    const interval = setInterval(() => {
+      loadTasks(); // Автообновление списка задач каждые 5 секунд
+    }, 5000);
+
+    return () => clearInterval(interval); // Очищаем интервал при размонтировании компонента
+  }, [loadTasks]);
 
   return (
     <div id="App">
@@ -84,45 +141,83 @@ function App() {
         <input
           id="task"
           className="input"
-          onChange={updateTask}
-          value={task}
+          onChange={updateTaskName}
+          value={taskName}
           autoComplete="off"
           type="text"
           placeholder="Введите задачу"
         />
+        <select
+          id="priority"
+          className="input"
+          value={priority}
+          onChange={updatePriority}
+        >
+          <option value="High">Высокий</option>
+          <option value="Medium">Средний</option>
+          <option value="Low">Низкий</option>
+        </select>
         <button className="btn" onClick={addNewTask}>Добавить задачу</button>
       </div>
-      <div>
-        <h1>Список задач</h1>
-        <table className="task-table">
-          <thead>
-            <tr>
-              <th>Задача</th>
-              <th>Дата выполнения</th>
-              <th>Статус</th>
-              <th>Действия</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tasks.map((item, index) => (
-              <tr key={index}>
-                <td>{item.task}</td>
-                <td>{item.date}</td>
-                <td>{item.status}</td>
-                <td>
-                  <button className="btn-delete" onClick={() => removeTask(item.task)}>Удалить</button>
-                  <button
-                    className="btn-done"
-                    onClick={() => markTaskAsDone(item.task)}
-                    disabled={item.status === "Done"}
-                  >
-                    Готово
-                  </button>
-                </td>
+
+      <div className="task-columns">
+        <div className="task-column">
+          <h1>Не выполненные задачи</h1>
+          <table className="task-table">
+            <thead>
+              <tr>
+                <th>Задача</th>
+                <th>Дата выполнения</th>
+                <th>Статус</th>
+                <th>Приоритет</th>
+                <th>Действия</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {allTasks.filter((task) => task.status === "Not Completed").map((item) => (
+                <tr key={item.id}>
+                  <td>{item.task}</td>
+                  <td>{item.date}</td>
+                  <td>{item.status}</td>
+                  <td>{item.priority}</td>
+                  <td>
+                    <button className="btn-delete" onClick={() => removeTask(item.id)}>Удалить</button>
+                    <button className="btn-done" onClick={() => markTaskAsDone(item.id)}>Готово</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="task-column">
+          <h1>Выполненные задачи</h1>
+          <table className="task-table">
+            <thead>
+              <tr>
+                <th>Задача</th>
+                <th>Дата выполнения</th>
+                <th>Статус</th>
+                <th>Приоритет</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allTasks.filter((task) => task.status === "Completed").map((item) => (
+                <tr key={item.id} className="done-task">
+                  <td><s>{item.task}</s></td>
+                  <td>{item.date}</td>
+                  <td>{item.status}</td>
+                  <td>{item.priority}</td>
+                  <td>
+                    <button className="btn-delete" onClick={() => removeTask(item.id)}>Удалить</button>
+                    <button className="btn-done" onClick={() => markTaskAsNotDone(item.id)}>Не готово</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
